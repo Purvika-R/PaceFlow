@@ -1,0 +1,10 @@
+const router = require('express').Router();
+const { body } = require('express-validator');
+const controller = require('../controllers/authController');
+const validate = require('../middleware/validate');
+const auth = require('../middleware/auth');
+const passwordRule = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,15}$';
+router.post('/register', [body('name').trim().notEmpty().withMessage('Name is required'), body('email').isEmail().withMessage('A valid email is required').normalizeEmail(), body('password').matches(new RegExp(passwordRule)).withMessage('Password must be 8–15 characters and include uppercase, lowercase, number, and special character.')], validate, controller.register);
+router.post('/login', [body('email').isEmail().withMessage('A valid email is required').normalizeEmail(), body('password').notEmpty().withMessage('Password is required')], validate, controller.login);
+router.get('/me', auth, controller.me);
+module.exports = router;

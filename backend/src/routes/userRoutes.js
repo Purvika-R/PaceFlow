@@ -1,0 +1,1 @@
+const router=require('express').Router(),c=require('../controllers/userController'),v=require('../validators/userValidator'),validate=require('../middleware/validate');router.route('/').post(v.create,validate,c.create).get(c.list);router.route('/:id').get(v.id(),validate,c.get).delete(v.id(),validate,c.remove);module.exports=router;
