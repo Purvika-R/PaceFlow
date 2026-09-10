@@ -1,9 +1,11 @@
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, createContext, useContext } from 'react';
 import { Bell, CheckCircle2, Circle, FolderKanban, LayoutDashboard, Menu, Search, Settings, BarChart3, CheckSquare, Target, Inbox, X, Save, AlertCircle, Bot, LogOut, Edit2, Loader, TrendingUp, Activity, Zap } from 'lucide-react';
 import { useWorkspaceData } from './hooks/useWorkspaceData';
 import { useAuth } from './hooks/useAuth.jsx';
 import PersistentCopilot from './PersistentCopilot';
+
+const AccentContext = createContext('emerald');
 
 const navigation = [
   ['/', 'Mission Control', LayoutDashboard],
@@ -14,11 +16,24 @@ const navigation = [
   ['/settings', 'Settings', Settings]
 ];
 
-const Avatar = ({ initials = 'PR' }) => (
-  <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-[10px] font-bold text-slate-900 shadow-lg shadow-emerald-500/30">
-    {initials}
-  </span>
-);
+const Avatar = ({ initials = 'PR', accent = 'emerald' }) => {
+  const isAmber = accent === 'amber';
+  return (
+    <span
+      className={`grid h-8 w-8 place-items-center rounded-full text-[10px] font-bold text-slate-900 shadow-lg ${
+        isAmber
+          ? ''
+          : 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/30'
+      }`}
+      style={isAmber ? {
+        background: 'linear-gradient(to bottom right, var(--accent-primary), var(--accent-primary-hover))',
+        boxShadow: '0 4px 14px var(--accent-shadow)'
+      } : {}}
+    >
+      {initials}
+    </span>
+  );
+};
 
 const Bar = ({ value }) => (
   <div className="h-2 overflow-hidden rounded-full bg-slate-800/60 relative">
@@ -29,8 +44,10 @@ const Bar = ({ value }) => (
   </div>
 );
 
-const Badge = ({ children, variant = 'default' }) => {
-  const variants = {
+const Badge = ({ children, variant = 'default', accent = 'emerald' }) => {
+  const isAmber = accent === 'amber';
+
+  const defaultVariants = {
     default: 'bg-slate-800/80 text-slate-300 border-slate-700',
     active: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
     done: 'bg-teal-500/20 text-teal-300 border-teal-500/40',
@@ -39,10 +56,28 @@ const Badge = ({ children, variant = 'default' }) => {
     low: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
   };
 
+  const amberVariants = {
+    default: 'bg-slate-800/80 text-slate-300 border-slate-700',
+    active: '',
+    done: '',
+    high: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+    medium: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    low: '',
+  };
+
+  const variants = isAmber ? amberVariants : defaultVariants;
   const variantClass = variants[variant.toLowerCase()] || variants.default;
+  const useAmberStyle = isAmber && ['low', 'active', 'done'].includes(variant.toLowerCase());
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-mono-code font-semibold uppercase tracking-wider ${variantClass}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-mono-code font-semibold uppercase tracking-wider ${variantClass}`}
+      style={useAmberStyle ? {
+        backgroundColor: 'var(--accent-bg)',
+        color: 'var(--accent-text)',
+        borderColor: 'var(--accent-border)'
+      } : {}}
+    >
       <span className="inline-block h-1 w-1 rounded-full bg-current opacity-75" />
       {children}
     </span>
@@ -172,6 +207,10 @@ function Layout() {
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  // Mission Control is at '/' — use amber accent there, emerald everywhere else
+  const isMissionControl = location.pathname === '/';
+  const pageAccent = isMissionControl ? 'amber' : 'emerald';
+
   const leaveWorkspace = () => {
     logout();
     window.location.assign('/');
@@ -179,29 +218,40 @@ function Layout() {
 
   const page = navigation.find((item) => item[0] === location.pathname)?.[1];
 
-  const links = navigation.map(([to, label, Icon]) => (
-    <NavLink
-      key={to}
-      end={to === '/'}
-      to={to}
-      onClick={() => setOpen(false)}
-      className={({ isActive }) =>
-        `focus flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-display font-medium transition-all ${
-          isActive
-            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/10'
-            : 'text-slate-500 hover:bg-slate-800/60 hover:text-slate-300'
-        }`
-      }
-    >
-      <Icon size={18} />
-      {label}
-    </NavLink>
-  ));
+  const links = navigation.map(([to, label, Icon]) => {
+    const isThisLinkMissionControl = to === '/';
+    return (
+      <NavLink
+        key={to}
+        end={to === '/'}
+        to={to}
+        onClick={() => setOpen(false)}
+        className={({ isActive }) =>
+          `focus flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-display font-medium transition-all ${
+            isActive
+              ? isThisLinkMissionControl
+                ? 'border shadow-lg'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+              : 'text-slate-500 hover:bg-slate-800/60 hover:text-slate-300'
+          }`
+        }
+        style={({ isActive }) => (isActive && isThisLinkMissionControl) ? {
+          backgroundColor: 'var(--accent-bg)',
+          color: 'var(--accent-text)',
+          borderColor: 'var(--accent-border)',
+          boxShadow: '0 8px 16px -4px var(--accent-shadow)'
+        } : {}}
+      >
+        <Icon size={18} />
+        {label}
+      </NavLink>
+    );
+  });
 
   const profile = (
     <div className="mt-auto border-t border-slate-800/60 pt-4">
       <div className="flex items-center gap-2">
-        <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} />
+        <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} accent={pageAccent} />
         <span className="min-w-0 text-sm">
           <b className="block truncate font-display text-slate-300">{user?.name}</b>
           <i className="block truncate font-mono-code text-[10px] text-slate-600">{user?.role || 'DEVELOPER'}</i>
@@ -218,71 +268,109 @@ function Layout() {
   );
 
   return (
-    <div className="min-h-screen bg-[#080d1a] grid-bg scanlines">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 z-40 hidden w-64 flex-col border-r border-slate-800/60 bg-[#0a0f1c]/95 backdrop-blur-sm p-5 lg:flex">
-        <div className="mb-9 hud-border pl-3 pt-3">
-          <b className="block text-xl font-display text-slate-100 tracking-tight">Vectorlane</b>
-          <span className="font-mono-code text-[9px] tracking-[.25em] text-emerald-400">EXECUTION_OS</span>
-        </div>
-        {links}
-        {profile}
-      </aside>
-
-      {/* Mobile sidebar overlay */}
-      {open && (
-        <aside className="fixed inset-0 z-50 flex w-full flex-col bg-[#0a0f1c] p-5 shadow-xl sm:w-72 lg:hidden">
-          <button
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            className="self-end text-slate-400 hover:text-white transition"
-          >
-            <X />
-          </button>
-          <div className="mb-9">
-            <b className="block text-xl font-display text-slate-100">Vectorlane</b>
-            <span className="font-mono-code text-[9px] tracking-[.25em] text-emerald-400">EXECUTION_OS</span>
+    <AccentContext.Provider value={pageAccent}>
+      <div className="min-h-screen bg-[#080d1a] grid-bg scanlines">
+        {/* Desktop sidebar */}
+        <aside className="fixed inset-y-0 z-40 hidden w-64 flex-col border-r border-slate-800/60 bg-[#0a0f1c]/95 backdrop-blur-sm p-5 lg:flex">
+          <div className="mb-9 hud-border pl-3 pt-3">
+            <b className="block text-xl font-display text-slate-100 tracking-tight">Vectorlane</b>
+            <span
+              className={`font-mono-code text-[9px] tracking-[.25em] ${
+                isMissionControl ? '' : 'text-emerald-400'
+              }`}
+              style={isMissionControl ? { color: 'var(--accent-primary)' } : {}}
+            >
+              EXECUTION_OS
+            </span>
           </div>
           {links}
           {profile}
         </aside>
-      )}
 
-      <main className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800/60 bg-[#080d1a]/90 backdrop-blur-sm px-4 sm:px-7">
-          <div className="flex items-center gap-3">
+        {/* Mobile sidebar overlay */}
+        {open && (
+          <aside className="fixed inset-0 z-50 flex w-full flex-col bg-[#0a0f1c] p-5 shadow-xl sm:w-72 lg:hidden">
             <button
-              aria-label="Open navigation"
-              onClick={() => setOpen(true)}
-              className="text-slate-500 hover:text-slate-300 transition lg:hidden"
+              aria-label="Close menu"
+              onClick={() => setOpen(false)}
+              className="self-end text-slate-400 hover:text-white transition"
             >
-              <Menu />
+              <X />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-pulse" />
-              <b className="font-mono-code text-[11px] uppercase tracking-[.2em] text-slate-500">{page}</b>
+            <div className="mb-9">
+              <b className="block text-xl font-display text-slate-100">Vectorlane</b>
+              <span
+                className={`font-mono-code text-[9px] tracking-[.25em] ${
+                  isMissionControl ? '' : 'text-emerald-400'
+                }`}
+                style={isMissionControl ? { color: 'var(--accent-primary)' } : {}}
+              >
+                EXECUTION_OS
+              </span>
             </div>
+            {links}
+            {profile}
+          </aside>
+        )}
+
+        <main className="lg:pl-64">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800/60 bg-[#080d1a]/90 backdrop-blur-sm px-4 sm:px-7">
+            <div className="flex items-center gap-3">
+              <button
+                aria-label="Open navigation"
+                onClick={() => setOpen(true)}
+                className="text-slate-500 hover:text-slate-300 transition lg:hidden"
+              >
+                <Menu />
+              </button>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`hidden sm:flex h-2 w-2 rounded-full animate-pulse ${
+                    isMissionControl ? '' : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                  }`}
+                  style={isMissionControl ? {
+                    backgroundColor: 'var(--accent-primary)',
+                    boxShadow: '0 0 8px var(--accent-glow)'
+                  } : {}}
+                />
+                <b className="font-mono-code text-[11px] uppercase tracking-[.2em] text-slate-500">{page}</b>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                className={`text-slate-500 transition relative ${
+                  isMissionControl ? '' : 'hover:text-emerald-400'
+                }`}
+                onMouseEnter={(e) => isMissionControl && (e.currentTarget.style.color = 'var(--accent-primary)')}
+                onMouseLeave={(e) => isMissionControl && (e.currentTarget.style.color = '')}
+              >
+                <Bell size={18} />
+                <span
+                  className={`absolute -top-1 -right-1 h-2 w-2 rounded-full ${
+                    isMissionControl ? '' : 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
+                  }`}
+                  style={isMissionControl ? {
+                    backgroundColor: 'var(--accent-primary)',
+                    boxShadow: '0 0 6px var(--accent-glow)'
+                  } : {}}
+                />
+              </button>
+              <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} accent={pageAccent} />
+            </div>
+          </header>
+          <div className="mx-auto max-w-7xl p-4 sm:p-7">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/ai" element={<Copilot />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="text-slate-500 hover:text-emerald-400 transition relative">
-              <Bell size={18} />
-              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            </button>
-            <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} />
-          </div>
-        </header>
-        <div className="mx-auto max-w-7xl p-4 sm:p-7">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/ai" element={<Copilot />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Routes>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </AccentContext.Provider>
   );
 }
 
@@ -291,6 +379,7 @@ function Dashboard() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
   const [priority, setPriority] = useState('All');
+  const accent = 'amber'; // Mission Control uses amber accent
 
   const term = query.trim().toLowerCase();
   const filteredProjects = projects.filter(
@@ -324,7 +413,7 @@ function Dashboard() {
     <>
       <section className="flex flex-col justify-between gap-4 md:flex-row">
         <div>
-          <p className="font-mono-code text-[10px] uppercase tracking-[.2em] text-emerald-400">// WORKSPACE_OVERVIEW</p>
+          <p className="font-mono-code text-[10px] uppercase tracking-[.2em]" style={{ color: 'var(--accent-text)' }}>// WORKSPACE_OVERVIEW</p>
           <h1 className="mt-2 text-3xl font-display font-bold text-slate-100 tracking-tight">Mission Control</h1>
           <p className="mt-2 text-sm text-slate-500">Real-time execution metrics across all project lanes</p>
         </div>
@@ -344,12 +433,12 @@ function Dashboard() {
       <section className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Primary stat - larger, emphasized */}
         <article className="card card-hover p-6 sm:col-span-2 lg:col-span-1 lg:row-span-2 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all" />
+          <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl group-hover:opacity-30 transition-all" style={{ backgroundColor: 'var(--accent-bg)' }} />
           <div className="relative">
-            <Target className="text-emerald-400 mb-4" size={24} />
-            <p className="text-6xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-br from-emerald-300 to-teal-400">{progress}%</p>
+            <Target className="mb-4" style={{ color: 'var(--accent-primary)' }} size={24} />
+            <p className="text-6xl font-display font-bold text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(to bottom right, var(--accent-primary), var(--accent-primary-hover))' }}>{progress}%</p>
             <p className="mt-2 font-mono-code text-[10px] uppercase tracking-wider text-slate-500">COMPLETION_RATE</p>
-            <div className="mt-4 flex items-center gap-2 text-xs text-emerald-400 font-mono-code">
+            <div className="mt-4 flex items-center gap-2 text-xs font-mono-code" style={{ color: 'var(--accent-primary)' }}>
               <TrendingUp size={14} />
               <span>+12% this sprint</span>
             </div>
@@ -363,8 +452,8 @@ function Dashboard() {
           [CheckCircle2, 'RESOLVED', completed, 'Completed'],
         ].map(([Icon, label, value, subtitle]) => (
           <article className="card card-hover p-5 group relative overflow-hidden" key={label}>
-            <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all" />
-            <Icon className="text-emerald-400/60 mb-3" size={20} />
+            <div className="absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl group-hover:opacity-20 transition-all" style={{ backgroundColor: 'var(--accent-bg)' }} />
+            <Icon className="mb-3" style={{ color: 'var(--accent-primary)', opacity: 0.6 }} size={20} />
             <p className="text-3xl font-display font-bold text-slate-200">{value}</p>
             <p className="mt-1 font-mono-code text-[9px] uppercase tracking-wider text-slate-600">{label}</p>
             <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
@@ -373,23 +462,32 @@ function Dashboard() {
       </section>
 
       {/* Productivity pulse with enhanced styling */}
-      <section className="card card-hover mt-7 p-6 border-emerald-500/10">
+      <section className="card card-hover mt-7 p-6" style={{ borderColor: 'var(--accent-border)' }}>
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <Zap className="text-emerald-400" size={18} />
+              <Zap style={{ color: 'var(--accent-primary)' }} size={18} />
               <h2 className="font-display font-bold text-slate-200">Execution Velocity</h2>
             </div>
             <p className="mt-1 font-mono-code text-[10px] text-slate-600">// Task throughput across integrated workspace</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-display font-bold text-emerald-400">{completed}</span>
+            <span className="text-3xl font-display font-bold" style={{ color: 'var(--accent-primary)' }}>{completed}</span>
             <span className="font-mono-code text-slate-600">/</span>
             <span className="text-xl font-mono-code text-slate-500">{tasks.length}</span>
           </div>
         </div>
         <div className="mt-4">
-          <Bar value={progress} />
+          <div className="h-2 overflow-hidden rounded-full bg-slate-800/60 relative">
+            <div
+              className="bar-fill absolute inset-y-0 left-0 rounded-full"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(to right, var(--accent-primary), var(--accent-primary-hover))',
+                boxShadow: '0 0 12px var(--accent-glow)'
+              }}
+            />
+          </div>
         </div>
       </section>
 
@@ -400,7 +498,43 @@ function Dashboard() {
       {filteredProjects.length ? (
         <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProjects.map((project) => (
-            <Project key={project.id} project={project} />
+            <article key={project.id} className="card card-hover p-5 group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundImage: 'linear-gradient(to bottom, var(--accent-primary), var(--accent-primary-hover))' }} />
+              <div className="flex justify-between gap-2">
+                <h3 className="font-display font-semibold text-slate-200">{project.name}</h3>
+                <Badge variant={project.status === 'Completed' ? 'done' : 'active'} accent={accent}>{project.status}</Badge>
+              </div>
+              <p className="mt-2 min-h-10 text-sm text-slate-500">
+                {project.description || 'No description provided.'}
+              </p>
+              <div className="mt-4 flex justify-between text-sm font-mono-code">
+                <b style={{ color: 'var(--accent-primary)' }}>{project.progress}%</b>
+                <span className="text-slate-500">
+                  {project.completedTasks}<span className="text-slate-600">/</span>{project.totalTasks} tasks
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-800/60 relative">
+                <div
+                  className="bar-fill absolute inset-y-0 left-0 rounded-full"
+                  style={{
+                    width: `${project.progress}%`,
+                    background: 'linear-gradient(to right, var(--accent-primary), var(--accent-primary-hover))',
+                    boxShadow: '0 0 12px var(--accent-glow)'
+                  }}
+                />
+              </div>
+              <div className="mt-4 flex justify-between text-xs">
+                <span className="flex -space-x-1">
+                  {project.members.map((member) => (
+                    <Avatar key={member} initials={member} accent={accent} />
+                  ))}
+                </span>
+                <span className="font-mono-code text-slate-500">
+                  <Badge variant={project.priority} accent={accent}>{project.priority}</Badge>
+                  <span className="ml-2 text-slate-600">{project.dueDate}</span>
+                </span>
+              </div>
+            </article>
           ))}
         </section>
       ) : (
@@ -418,11 +552,16 @@ function Dashboard() {
               <button
                 key={item}
                 onClick={() => setStatus(item)}
-                className={`rounded-lg px-3 py-1.5 font-mono-code text-[10px] font-semibold uppercase tracking-wider transition ${
+                className={`rounded-lg px-3 py-1.5 font-mono-code text-[10px] font-semibold uppercase tracking-wider transition border ${
                   status === item
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-slate-800/40 text-slate-500 border border-slate-800 hover:border-slate-700 hover:text-slate-400'
+                    ? 'border-current'
+                    : 'bg-slate-800/40 text-slate-500 border-slate-800 hover:border-slate-700 hover:text-slate-400'
                 }`}
+                style={status === item ? {
+                  backgroundColor: 'var(--accent-bg)',
+                  color: 'var(--accent-text)',
+                  borderColor: 'var(--accent-border)'
+                } : {}}
               >
                 {item}
               </button>
@@ -443,7 +582,24 @@ function Dashboard() {
         {filteredTasks.length ? (
           <div className="card mt-4 px-5">
             {filteredTasks.map((task) => (
-              <Task key={task.id} task={task} />
+              <article key={task.id} className="grid grid-cols-[auto_1fr_auto] gap-3 border-b border-slate-800/50 py-4 last:border-0 group hover:bg-slate-800/20 transition-colors px-2 -mx-2 rounded-lg">
+                <span className="group-hover:scale-110 transition-transform" style={{ color: 'var(--accent-primary)' }}>
+                  {task.status === 'Done' ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                </span>
+                <div>
+                  <b className="text-sm font-display text-slate-200">{task.title}</b>
+                  <p className="mt-1 font-mono-code text-[10px] text-slate-600">
+                    {task.project} <span className="text-slate-700">·</span> {task.assignee}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <Badge variant={task.status === 'Done' ? 'done' : 'default'} accent={accent}>{task.status}</Badge>
+                  <p className="mt-2 font-mono-code text-[10px] text-slate-600">
+                    <Badge variant={task.priority} accent={accent}>{task.priority}</Badge>
+                    <span className="ml-1.5 text-slate-700">{task.dueDate}</span>
+                  </p>
+                </div>
+              </article>
             ))}
           </div>
         ) : (

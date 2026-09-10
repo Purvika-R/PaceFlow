@@ -31,14 +31,19 @@ exports.generateTasks = async (req, res, next) => {
     if (!await Project.exists({ _id: project })) return res.status(404).json({ success: false, message: 'Project not found' });
     const existing = await populated(Task.find({ project, aiGenerationId: generationId }).sort('createdAt'));
     if (existing.length) return res.json({ success: true, data: { tasks: existing, source: 'persisted' } });
-    if (!process.env.MISTRAL_API_KEY) return res.status(503).json({ success: false, message: 'Mistral AI is not configured. Set MISTRAL_API_KEY in backend/.env and restart the backend.' });
     let tasks; let source = 'mistral'; let providerFallback = false;
-    try {
-      const response = await fetch('https://api.mistral.ai/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: process.env.MISTRAL_MODEL || 'mistral-small-2506', messages: [{ role: 'system', content: 'You create concise developer task plans. Return only a JSON object with a tasks array. Every task must contain title, description, and priority set to low, medium, or high.' }, { role: 'user', content: `Create ${count} developer tasks for this project goal: ${goal}` }], response_format: { type: 'json_object' }, temperature: 0.35, max_tokens: 900 }) });
-      if (!response.ok) throw new Error(`Mistral request failed with status ${response.status}`);
-      const payload = await response.json(); const content = payload.choices?.[0]?.message?.content; const text = Array.isArray(content) ? content.map((part) => part.text || '').join('') : content; const parsed = JSON.parse(text || '{}'); tasks = Array.isArray(parsed.tasks) ? parsed.tasks : parsed;
-      if (!Array.isArray(tasks) || !tasks.length) throw new Error('Mistral returned no task drafts');
-    } catch (providerError) { tasks = fallbackPlan(goal, count); source = 'planner'; providerFallback = true; }
+    if (!process.env.MISTRAL_API_KEY) {
+      tasks = fallbackPlan(goal, count);
+      source = 'planner';
+      providerFallback = true;
+    } else {
+      try {
+        const response = await fetch('https://api.mistral.ai/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: process.env.MISTRAL_MODEL || 'mistral-small-2506', messages: [{ role: 'system', content: 'You create concise developer task plans. Return only a JSON object with a tasks array. Every task must contain title, description, and priority set to low, medium, or high.' }, { role: 'user', content: `Create ${count} developer tasks for this project goal: ${goal}` }], response_format: { type: 'json_object' }, temperature: 0.35, max_tokens: 900 }) });
+        if (!response.ok) throw new Error(`Mistral request failed with status ${response.status}`);
+        const payload = await response.json(); const content = payload.choices?.[0]?.message?.content; const text = Array.isArray(content) ? content.map((part) => part.text || '').join('') : content; const parsed = JSON.parse(text || '{}'); tasks = Array.isArray(parsed.tasks) ? parsed.tasks : parsed;
+        if (!Array.isArray(tasks) || !tasks.length) throw new Error('Mistral returned no task drafts');
+      } catch (providerError) { tasks = fallbackPlan(goal, count); source = 'planner'; providerFallback = true; }
+    }
     const savedTasks = await persistTasks({ tasks, project, goal, generationId, userId: req.user._id });
     res.status(201).json({ success: true, data: { tasks: savedTasks, source, providerFallback } });
   } catch (error) {
