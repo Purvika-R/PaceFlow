@@ -135,7 +135,7 @@ export default function PersistentCopilot() {
   return (
     <>
       <p className="font-mono-code text-[10px] uppercase tracking-[.2em] text-emerald-400">// AI_COPILOT_V2</p>
-      <h1 className="mt-2 text-2xl font-display font-bold text-slate-100 tracking-tight sm:text-3xl">
+      <h1 className="mt-2 text-2xl font-display font-bold tracking-tight sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
         Intent → Execution
       </h1>
       <p className="mt-2 max-w-xl text-sm text-slate-500">
@@ -204,7 +204,7 @@ export default function PersistentCopilot() {
       )}
 
       <div className="mt-6 flex items-baseline gap-3">
-        <h2 className="text-lg font-display font-bold text-slate-200">Generated Plans</h2>
+        <h2 className="text-lg font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Generated Plans</h2>
         <span className="font-mono-code text-xs text-slate-600">// {generatedTasks.length} saved</span>
       </div>
 
@@ -215,7 +215,7 @@ export default function PersistentCopilot() {
             <p className="font-mono-code text-[9px] tracking-widest text-teal-400 uppercase">
               AI_TASK · {task.project}
             </p>
-            <h2 className="mt-2 font-display font-semibold text-slate-200">{task.title}</h2>
+            <h2 className="mt-2 font-display font-semibold" style={{ color: 'var(--text-secondary)' }}>{task.title}</h2>
             <p className="mt-2 text-sm text-slate-500">{task.description || 'No description provided.'}</p>
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center gap-2">

@@ -21,13 +21,72 @@ const formatDate = (date) =>
 const formatDateInput = (date) =>
   date ? new Date(date).toISOString().split('T')[0] : '';
 
+export function calculateStreak(tasks = []) {
+  if (!tasks || !tasks.length) return 0;
+
+  const activeDates = new Set();
+  tasks.forEach((t) => {
+    if (t.updatedAt) {
+      activeDates.add(new Date(t.updatedAt).toISOString().split('T')[0]);
+    }
+    if (t.createdAt) {
+      activeDates.add(new Date(t.createdAt).toISOString().split('T')[0]);
+    }
+  });
+
+  if (!activeDates.size) return 0;
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  let streak = 0;
+  let curr = new Date(today);
+
+  // If active today, count consecutive active days back
+  if (activeDates.has(todayStr)) {
+    streak = 1;
+    while (true) {
+      curr.setDate(curr.getDate() - 1);
+      const str = curr.toISOString().split('T')[0];
+      if (activeDates.has(str)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+  } else if (activeDates.has(yesterdayStr)) {
+    // If active yesterday, streak is maintained
+    streak = 1;
+    curr = new Date(yesterday);
+    while (true) {
+      curr.setDate(curr.getDate() - 1);
+      const str = curr.toISOString().split('T')[0];
+      if (activeDates.has(str)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+  } else {
+    // Workspace with completed items
+    streak = tasks.some((t) => t.status === 'Done') ? 1 : 0;
+  }
+
+  return streak;
+}
+
 export function useWorkspaceData() {
   const [state, setState] = useState({
     loading: true,
     error: '',
     users: [],
     projects: [],
-    tasks: []
+    tasks: [],
+    streak: 0
   });
 
   const load = useCallback(async () => {
@@ -80,9 +139,11 @@ export function useWorkspaceData() {
         };
       });
 
-      setState({ loading: false, error: '', users, projects, tasks });
+      const streak = calculateStreak(tasks);
+
+      setState({ loading: false, error: '', users, projects, tasks, streak });
     } catch (error) {
-      setState({ loading: false, error: error.message, users: [], projects: [], tasks: [] });
+      setState({ loading: false, error: error.message, users: [], projects: [], tasks: [], streak: 0 });
     }
   }, []);
 

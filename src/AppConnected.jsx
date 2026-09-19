@@ -1,11 +1,12 @@
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useState, createContext, useContext } from 'react';
-import { Bell, CheckCircle2, Circle, FolderKanban, LayoutDashboard, Menu, Search, Settings, BarChart3, CheckSquare, Target, Inbox, X, Save, AlertCircle, Bot, LogOut, Edit2, Loader, TrendingUp, Activity, Zap } from 'lucide-react';
+import { Bell, CheckCircle2, Circle, FolderKanban, LayoutDashboard, Menu, Search, Settings, BarChart3, CheckSquare, Target, Inbox, X, Save, AlertCircle, Bot, LogOut, Edit2, Loader, TrendingUp, Activity, Zap, Flame, Sparkles } from 'lucide-react';
 import { useWorkspaceData } from './hooks/useWorkspaceData';
 import { useAuth } from './hooks/useAuth.jsx';
 import PersistentCopilot from './PersistentCopilot';
 
 const AccentContext = createContext('emerald');
+const SearchContext = createContext({ query: '', setQuery: () => {} });
 
 const navigation = [
   ['/', 'Mission Control', LayoutDashboard],
@@ -16,8 +17,19 @@ const navigation = [
   ['/settings', 'Settings', Settings]
 ];
 
-const Avatar = ({ initials = 'PR', accent = 'emerald' }) => {
+const Avatar = ({ initials = 'PR', avatarUrl = null, accent = 'emerald' }) => {
   const isAmber = accent === 'amber';
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt="Profile"
+        className="h-8 w-8 rounded-full object-cover shadow-lg"
+      />
+    );
+  }
+
   return (
     <span
       className={`grid h-8 w-8 place-items-center rounded-full text-[10px] font-bold text-slate-900 shadow-lg ${
@@ -151,7 +163,7 @@ function Project({ project }) {
     <article className="card card-hover p-5 group relative overflow-hidden">
       <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="flex justify-between gap-2">
-        <h3 className="font-display font-semibold text-slate-200">{project.name}</h3>
+        <h3 className="font-display font-semibold" style={{ color: 'var(--text-secondary)' }}>{project.name}</h3>
         <Badge variant={project.status === 'Completed' ? 'done' : 'active'}>{project.status}</Badge>
       </div>
       <p className="mt-2 min-h-10 text-sm text-slate-500">
@@ -186,7 +198,7 @@ function Task({ task }) {
         {task.status === 'Done' ? <CheckCircle2 size={18} /> : <Circle size={18} />}
       </span>
       <div>
-        <b className="text-sm font-display text-slate-200">{task.title}</b>
+        <b className="text-sm font-display" style={{ color: 'var(--text-secondary)' }}>{task.title}</b>
         <p className="mt-1 font-mono-code text-[10px] text-slate-600">
           {task.project} <span className="text-slate-700">·</span> {task.assignee}
         </p>
@@ -204,8 +216,10 @@ function Task({ task }) {
 
 function Layout() {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { streak } = useWorkspaceData();
 
   // Mission Control is at '/' — use amber accent there, emerald everywhere else
   const isMissionControl = location.pathname === '/';
@@ -249,17 +263,37 @@ function Layout() {
   });
 
   const profile = (
-    <div className="mt-auto border-t border-slate-800/60 pt-4">
+    <div className="mt-auto border-t pt-4" style={{ borderColor: 'var(--border-default)' }}>
+      {/* Execution streak indicator */}
+      <div className="mb-3 flex items-center justify-between rounded-xl px-3 py-2 border font-mono-code text-xs" style={{ borderColor: 'var(--border-default)', background: 'var(--bg-input)' }}>
+        <span className="flex items-center gap-1.5 font-semibold text-[10px] tracking-wider" style={{ color: 'var(--accent-primary)' }}>
+          <Flame size={14} className="animate-pulse" />
+          STREAK
+        </span>
+        <span className="font-display font-bold text-xs" style={{ color: 'var(--text-primary)' }}>
+          {streak} {streak === 1 ? 'DAY' : 'DAYS'}
+        </span>
+      </div>
+
       <div className="flex items-center gap-2">
-        <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} accent={pageAccent} />
+        <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} avatarUrl={user?.avatarUrl} accent={pageAccent} />
         <span className="min-w-0 text-sm">
-          <b className="block truncate font-display text-slate-300">{user?.name}</b>
-          <i className="block truncate font-mono-code text-[10px] text-slate-600">{user?.role || 'DEVELOPER'}</i>
+          <b className="block truncate font-display" style={{ color: 'var(--text-secondary)' }}>{user?.name}</b>
+          <i className="block truncate font-mono-code text-[10px]" style={{ color: 'var(--text-dim)' }}>{user?.role || 'DEVELOPER'}</i>
         </span>
       </div>
       <button
         onClick={leaveWorkspace}
-        className="focus mt-3 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-display text-slate-500 transition hover:bg-slate-800/60 hover:text-slate-300"
+        className="focus mt-3 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-display transition"
+        style={{ color: 'var(--text-muted)' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(100, 116, 139, 0.1)';
+          e.currentTarget.style.color = 'var(--text-secondary)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.color = 'var(--text-muted)';
+        }}
       >
         <LogOut size={15} />
         Logout
@@ -269,117 +303,179 @@ function Layout() {
 
   return (
     <AccentContext.Provider value={pageAccent}>
-      <div className="min-h-screen bg-[#080d1a] grid-bg scanlines">
-        {/* Desktop sidebar */}
-        <aside className="fixed inset-y-0 z-40 hidden w-64 flex-col border-r border-slate-800/60 bg-[#0a0f1c]/95 backdrop-blur-sm p-5 lg:flex">
-          <div className="mb-9 hud-border pl-3 pt-3">
-            <b className="block text-xl font-display text-slate-100 tracking-tight">Vectorlane</b>
-            <span
-              className={`font-mono-code text-[9px] tracking-[.25em] ${
-                isMissionControl ? '' : 'text-emerald-400'
-              }`}
-              style={isMissionControl ? { color: 'var(--accent-primary)' } : {}}
-            >
-              EXECUTION_OS
-            </span>
-          </div>
-          {links}
-          {profile}
-        </aside>
-
-        {/* Mobile sidebar overlay */}
-        {open && (
-          <aside className="fixed inset-0 z-50 flex w-full flex-col bg-[#0a0f1c] p-5 shadow-xl sm:w-72 lg:hidden">
-            <button
-              aria-label="Close menu"
-              onClick={() => setOpen(false)}
-              className="self-end text-slate-400 hover:text-white transition"
-            >
-              <X />
-            </button>
-            <div className="mb-9">
-              <b className="block text-xl font-display text-slate-100">Vectorlane</b>
+      <SearchContext.Provider value={{ query: searchQuery, setQuery: setSearchQuery }}>
+        <div className="min-h-screen grid-bg scanlines" style={{ background: 'var(--bg-primary)' }}>
+          {/* Desktop sidebar */}
+          <aside className="fixed inset-y-0 z-40 hidden w-64 flex-col border-r backdrop-blur-sm p-5 lg:flex" style={{ borderColor: 'var(--border-default)', background: 'var(--bg-secondary)' }}>
+            <div className="mb-9 hud-border pl-3 pt-3">
+              <b className="block text-xl font-display tracking-tight" style={{ color: 'var(--text-primary)' }}>PaceFlow</b>
               <span
                 className={`font-mono-code text-[9px] tracking-[.25em] ${
                   isMissionControl ? '' : 'text-emerald-400'
                 }`}
                 style={isMissionControl ? { color: 'var(--accent-primary)' } : {}}
               >
-                EXECUTION_OS
+                FLOW_OS
               </span>
             </div>
             {links}
             {profile}
           </aside>
-        )}
 
-        <main className="lg:pl-64">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800/60 bg-[#080d1a]/90 backdrop-blur-sm px-4 sm:px-7">
-            <div className="flex items-center gap-3">
+          {/* Mobile sidebar overlay */}
+          {open && (
+            <aside className="fixed inset-0 z-50 flex w-full flex-col p-5 shadow-xl sm:w-72 lg:hidden" style={{ background: 'var(--bg-secondary)' }}>
               <button
-                aria-label="Open navigation"
-                onClick={() => setOpen(true)}
-                className="text-slate-500 hover:text-slate-300 transition lg:hidden"
+                aria-label="Close menu"
+                onClick={() => setOpen(false)}
+                className="self-end transition"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
-                <Menu />
+                <X />
               </button>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`hidden sm:flex h-2 w-2 rounded-full animate-pulse ${
-                    isMissionControl ? '' : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
-                  }`}
-                  style={isMissionControl ? {
-                    backgroundColor: 'var(--accent-primary)',
-                    boxShadow: '0 0 8px var(--accent-glow)'
-                  } : {}}
-                />
-                <b className="font-mono-code text-[11px] uppercase tracking-[.2em] text-slate-500">{page}</b>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                className={`text-slate-500 transition relative ${
-                  isMissionControl ? '' : 'hover:text-emerald-400'
-                }`}
-                onMouseEnter={(e) => isMissionControl && (e.currentTarget.style.color = 'var(--accent-primary)')}
-                onMouseLeave={(e) => isMissionControl && (e.currentTarget.style.color = '')}
-              >
-                <Bell size={18} />
+              <div className="mb-9">
+                <b className="block text-xl font-display" style={{ color: 'var(--text-primary)' }}>PaceFlow</b>
                 <span
-                  className={`absolute -top-1 -right-1 h-2 w-2 rounded-full ${
-                    isMissionControl ? '' : 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
+                  className={`font-mono-code text-[9px] tracking-[.25em] ${
+                    isMissionControl ? '' : 'text-emerald-400'
                   }`}
-                  style={isMissionControl ? {
-                    backgroundColor: 'var(--accent-primary)',
-                    boxShadow: '0 0 6px var(--accent-glow)'
-                  } : {}}
-                />
-              </button>
-              <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} accent={pageAccent} />
+                  style={isMissionControl ? { color: 'var(--accent-primary)' } : {}}
+                >
+                  FLOW_OS
+                </span>
+              </div>
+              {links}
+              {profile}
+            </aside>
+          )}
+
+          <main className="lg:pl-64">
+            <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b backdrop-blur-sm px-4 sm:px-7 gap-3 sm:gap-6" style={{ borderColor: 'var(--border-default)', background: 'var(--bg-primary)' }}>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  aria-label="Open navigation"
+                  onClick={() => setOpen(true)}
+                  className="transition lg:hidden"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  <Menu />
+                </button>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`hidden sm:flex h-2 w-2 rounded-full animate-pulse ${
+                      isMissionControl ? '' : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                    }`}
+                    style={isMissionControl ? {
+                      backgroundColor: 'var(--accent-primary)',
+                      boxShadow: '0 0 8px var(--accent-glow)'
+                    } : {}}
+                  />
+                  <b className="font-mono-code text-[11px] uppercase tracking-[.2em]" style={{ color: 'var(--text-muted)' }}>{page}</b>
+                </div>
+              </div>
+
+              {/* Header Search & AI Copilot Shortcut */}
+              <div className="flex flex-1 max-w-md items-center gap-2">
+                <div className="relative w-full">
+                  <Search className="absolute left-3 top-2.5 text-slate-500" size={15} />
+                  <input
+                    aria-label="Search workspace"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search workspace..."
+                    className="focus w-full rounded-xl border py-1.5 pl-9 pr-8 text-xs font-mono-code transition"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-default)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-2 transition"
+                      style={{ color: 'var(--text-muted)' }}
+                      aria-label="Clear search"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                <NavLink
+                  to="/ai"
+                  aria-label="AI Copilot"
+                  className="focus flex items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 py-1.5 text-xs font-mono-code font-semibold uppercase tracking-wider transition shrink-0 group shadow-sm"
+                  style={{
+                    borderColor: isMissionControl ? 'var(--accent-border)' : 'rgba(52, 211, 153, 0.4)',
+                    backgroundColor: isMissionControl ? 'var(--accent-bg)' : 'rgba(52, 211, 153, 0.1)',
+                    color: isMissionControl ? 'var(--accent-text)' : '#34d399',
+                  }}
+                  title="Open AI Copilot shortcut"
+                >
+                  <Bot size={15} className="group-hover:scale-110 transition-transform" />
+                  <span className="hidden sm:inline">COPILOT</span>
+                  <Sparkles size={11} className="opacity-75" />
+                </NavLink>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  className={`transition relative ${
+                    isMissionControl ? '' : 'hover:text-emerald-400'
+                  }`}
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => isMissionControl && (e.currentTarget.style.color = 'var(--accent-primary)')}
+                  onMouseLeave={(e) => isMissionControl && (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  <Bell size={18} />
+                  <span
+                    className={`absolute -top-1 -right-1 h-2 w-2 rounded-full ${
+                      isMissionControl ? '' : 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
+                    }`}
+                    style={isMissionControl ? {
+                      backgroundColor: 'var(--accent-primary)',
+                      boxShadow: '0 0 6px var(--accent-glow)'
+                    } : {}}
+                  />
+                </button>
+                <Avatar initials={user?.name?.slice(0, 2).toUpperCase()} avatarUrl={user?.avatarUrl} accent={pageAccent} />
+              </div>
+            </header>
+            <div className="mx-auto max-w-7xl p-4 sm:p-7">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/ai" element={<Copilot />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Routes>
             </div>
-          </header>
-          <div className="mx-auto max-w-7xl p-4 sm:p-7">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/ai" element={<Copilot />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Routes>
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
+      </SearchContext.Provider>
     </AccentContext.Provider>
   );
 }
 
 function Dashboard() {
-  const { loading, error, projects, tasks, reload } = useWorkspaceData();
-  const [query, setQuery] = useState('');
+  const { loading, error, projects, tasks, streak, reload } = useWorkspaceData();
+  const { user } = useAuth();
+  const { query, setQuery } = useContext(SearchContext);
   const [status, setStatus] = useState('All');
   const [priority, setPriority] = useState('All');
   const accent = 'amber'; // Mission Control uses amber accent
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   const term = query.trim().toLowerCase();
   const filteredProjects = projects.filter(
@@ -411,10 +507,70 @@ function Dashboard() {
 
   return (
     <>
+      {/* 1. Time-based Greeting Hero Banner */}
+      <section className="card p-6 sm:p-7 relative overflow-hidden group border mb-7" style={{ borderColor: 'var(--accent-border)' }}>
+        <div
+          className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-40 transition-opacity"
+          style={{ backgroundColor: 'var(--accent-bg)' }}
+        />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: 'var(--accent-primary)', boxShadow: '0 0 8px var(--accent-glow)' }}
+              />
+              <p className="font-mono-code text-[10px] uppercase tracking-[.25em]" style={{ color: 'var(--accent-text)' }}>
+                // WORKSPACE_ACTIVE · MISSION_CONTROL
+              </p>
+            </div>
+            <h1 className="mt-2 text-2xl sm:text-3xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              {getGreeting()}, {user?.name || 'Developer'}
+            </h1>
+            <p className="mt-2 text-xs sm:text-sm font-mono-code" style={{ color: 'var(--text-secondary)' }}>
+              {tasks.length > 0 ? (
+                <>
+                  You've resolved <b style={{ color: 'var(--accent-primary)' }}>{completed}</b> of <b style={{ color: 'var(--text-primary)' }}>{tasks.length}</b> tasks ({progress}%) across <b style={{ color: 'var(--text-primary)' }}>{projects.length}</b> active project lanes.
+                </>
+              ) : (
+                <>
+                  Workspace initialized with <b style={{ color: 'var(--text-primary)' }}>{projects.length}</b> project lanes ready for execution.
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Quick stats pills */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+            <div
+              className="flex items-center gap-2.5 rounded-xl px-3.5 py-2 border font-mono-code text-xs backdrop-blur-sm shadow-sm"
+              style={{ borderColor: 'var(--accent-border)', backgroundColor: 'var(--accent-bg)', color: 'var(--accent-text)' }}
+            >
+              <Flame size={16} className="text-amber-400 animate-pulse" />
+              <div>
+                <span className="block text-[9px] uppercase tracking-wider opacity-75">Streak</span>
+                <b className="font-display text-sm tracking-tight">{streak} {streak === 1 ? 'DAY' : 'DAYS'}</b>
+              </div>
+            </div>
+
+            <div
+              className="flex items-center gap-2.5 rounded-xl px-3.5 py-2 border font-mono-code text-xs backdrop-blur-sm shadow-sm"
+              style={{ borderColor: 'var(--border-default)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
+            >
+              <Target size={16} style={{ color: 'var(--accent-primary)' }} />
+              <div>
+                <span className="block text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Velocity</span>
+                <b className="font-display text-sm tracking-tight">{progress}% DONE</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="flex flex-col justify-between gap-4 md:flex-row">
         <div>
           <p className="font-mono-code text-[10px] uppercase tracking-[.2em]" style={{ color: 'var(--accent-text)' }}>// WORKSPACE_OVERVIEW</p>
-          <h1 className="mt-2 text-3xl font-display font-bold text-slate-100 tracking-tight">Mission Control</h1>
+          <h2 className="mt-2 text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Telemetry & Queue</h2>
           <p className="mt-2 text-sm text-slate-500">Real-time execution metrics across all project lanes</p>
         </div>
         <label className="relative w-full md:w-80">
@@ -454,7 +610,7 @@ function Dashboard() {
           <article className="card card-hover p-5 group relative overflow-hidden" key={label}>
             <div className="absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl group-hover:opacity-20 transition-all" style={{ backgroundColor: 'var(--accent-bg)' }} />
             <Icon className="mb-3" style={{ color: 'var(--accent-primary)', opacity: 0.6 }} size={20} />
-            <p className="text-3xl font-display font-bold text-slate-200">{value}</p>
+            <p className="text-3xl font-display font-bold" style={{ color: 'var(--text-secondary)' }}>{value}</p>
             <p className="mt-1 font-mono-code text-[9px] uppercase tracking-wider text-slate-600">{label}</p>
             <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
           </article>
@@ -467,7 +623,7 @@ function Dashboard() {
           <div>
             <div className="flex items-center gap-2">
               <Zap style={{ color: 'var(--accent-primary)' }} size={18} />
-              <h2 className="font-display font-bold text-slate-200">Execution Velocity</h2>
+              <h2 className="font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Execution Velocity</h2>
             </div>
             <p className="mt-1 font-mono-code text-[10px] text-slate-600">// Task throughput across integrated workspace</p>
           </div>
@@ -492,7 +648,7 @@ function Dashboard() {
       </section>
 
       <div className="mt-8 flex items-baseline gap-3">
-        <h2 className="text-xl font-display font-bold text-slate-200">Project Lanes</h2>
+        <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Project Lanes</h2>
         <span className="font-mono-code text-xs text-slate-600">// {filteredProjects.length} active</span>
       </div>
       {filteredProjects.length ? (
@@ -501,7 +657,7 @@ function Dashboard() {
             <article key={project.id} className="card card-hover p-5 group relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundImage: 'linear-gradient(to bottom, var(--accent-primary), var(--accent-primary-hover))' }} />
               <div className="flex justify-between gap-2">
-                <h3 className="font-display font-semibold text-slate-200">{project.name}</h3>
+                <h3 className="font-display font-semibold" style={{ color: 'var(--text-secondary)' }}>{project.name}</h3>
                 <Badge variant={project.status === 'Completed' ? 'done' : 'active'} accent={accent}>{project.status}</Badge>
               </div>
               <p className="mt-2 min-h-10 text-sm text-slate-500">
@@ -544,7 +700,7 @@ function Dashboard() {
       <section className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h2 className="text-xl font-display font-bold text-slate-200">Execution Queue</h2>
+            <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Execution Queue</h2>
             <span className="font-mono-code text-xs text-slate-600">// {filteredTasks.length} items</span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -587,7 +743,7 @@ function Dashboard() {
                   {task.status === 'Done' ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                 </span>
                 <div>
-                  <b className="text-sm font-display text-slate-200">{task.title}</b>
+                  <b className="text-sm font-display" style={{ color: 'var(--text-secondary)' }}>{task.title}</b>
                   <p className="mt-1 font-mono-code text-[10px] text-slate-600">
                     {task.project} <span className="text-slate-700">·</span> {task.assignee}
                   </p>
@@ -686,7 +842,7 @@ function Projects() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono-code text-[10px] uppercase tracking-[.2em] text-emerald-400">// PROJECT_MANAGEMENT</p>
-          <h1 className="mt-2 text-3xl font-display font-bold text-slate-100 tracking-tight">Project Lanes</h1>
+          <h1 className="mt-2 text-3xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Project Lanes</h1>
           <p className="mt-2 text-sm text-slate-500">Configure and monitor all active project streams</p>
         </div>
       </div>
@@ -895,7 +1051,7 @@ function Tasks() {
     <>
       <div className="mb-6">
         <p className="font-mono-code text-[10px] uppercase tracking-[.2em] text-emerald-400">// TASK_QUEUE</p>
-        <h1 className="mt-2 text-3xl font-display font-bold text-slate-100 tracking-tight">Execution Queue</h1>
+        <h1 className="mt-2 text-3xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Execution Queue</h1>
         <p className="mt-2 text-sm text-slate-500">Manage and prioritize all execution items</p>
       </div>
 
@@ -1035,7 +1191,7 @@ function Analytics() {
   return (
     <>
       <p className="font-mono-code text-[10px] uppercase tracking-[.2em] text-emerald-400">// SYSTEM_METRICS</p>
-      <h1 className="mt-2 text-3xl font-display font-bold text-slate-100 tracking-tight">Telemetry</h1>
+      <h1 className="mt-2 text-3xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Telemetry</h1>
       <p className="mt-2 text-sm text-slate-500">Real-time performance data from the execution workspace</p>
 
       <section className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -1049,14 +1205,14 @@ function Analytics() {
         ].map(([label, value]) => (
           <div className="card card-hover p-5" key={label}>
             <p className="font-mono-code text-[10px] uppercase tracking-wider text-slate-600">{label}</p>
-            <b className="mt-2 block text-3xl font-display text-slate-200">{value}</b>
+            <b className="mt-2 block text-3xl font-display" style={{ color: 'var(--text-secondary)' }}>{value}</b>
           </div>
         ))}
       </section>
 
       <section className="mt-7 grid gap-5 lg:grid-cols-2">
         <div className="card p-6">
-          <h2 className="font-display font-bold text-slate-200">Project Progress</h2>
+          <h2 className="font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Project Progress</h2>
           <p className="mt-1 font-mono-code text-[10px] text-slate-600">// Completion metrics per lane</p>
           <div className="mt-5 space-y-5">
             {projects.map((project) => (
@@ -1071,7 +1227,7 @@ function Analytics() {
           </div>
         </div>
         <div className="card p-6">
-          <h2 className="font-display font-bold text-slate-200">Task Distribution</h2>
+          <h2 className="font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Task Distribution</h2>
           <p className="mt-1 font-mono-code text-[10px] text-slate-600">// Status breakdown</p>
           <div className="mt-5 space-y-5">
             {['Done', 'In Progress', 'Todo'].map((item) => (
@@ -1093,7 +1249,7 @@ function Analytics() {
 function Toggle({ label, checked, onChange }) {
   return (
     <label className="flex items-center justify-between gap-4 py-4 cursor-pointer group">
-      <b className="text-sm font-display text-slate-300 group-hover:text-slate-200 transition">{label}</b>
+      <b className="text-sm font-display transition" style={{ color: 'var(--text-muted)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>{label}</b>
       <button
         type="button"
         aria-label={label}
@@ -1115,48 +1271,194 @@ function Toggle({ label, checked, onChange }) {
 }
 
 function SettingsPage() {
-  const [compact, setCompact] = useState(false);
-  const [reminders, setReminders] = useState(true);
+  const { user, updateSettings, updateAvatar } = useAuth();
+  const [theme, setTheme] = useState(user?.theme || 'dark');
+  const [reminders, setReminders] = useState(user?.remindersEnabled !== false);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl || null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    try {
+      await updateSettings({ theme, remindersEnabled: reminders });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      setError(e.message || 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setAvatarError('');
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('Image must be under 2MB. Please select a smaller file.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result;
+
+        // Preview immediately
+        setAvatarPreview(base64);
+
+        try {
+          // Upload to backend
+          await updateAvatar(base64);
+          // Success - preview is already set
+        } catch (err) {
+          setAvatarError(err.message || 'Failed to upload avatar');
+          // Revert preview on error
+          setAvatarPreview(user?.avatarUrl || null);
+        } finally {
+          setUploadingAvatar(false);
+        }
+      };
+      reader.onerror = () => {
+        setAvatarError('Failed to read image file');
+        setUploadingAvatar(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setAvatarError('Failed to process image');
+      setUploadingAvatar(false);
+    }
+  };
 
   return (
     <>
       <p className="font-mono-code text-[10px] uppercase tracking-[.2em] text-emerald-400">// USER_CONFIG</p>
-      <h1 className="mt-2 text-3xl font-display font-bold text-slate-100 tracking-tight">Settings</h1>
+      <h1 className="mt-2 text-3xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Settings</h1>
       <p className="mt-2 text-sm text-slate-500">Configure workspace preferences</p>
 
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
         <section className="card p-6">
-          <h2 className="font-display font-bold text-slate-200">Profile</h2>
+          <h2 className="font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Profile</h2>
+
+          {/* Avatar upload */}
+          <div className="mt-4">
+            <label className="block text-sm font-display text-slate-400 mb-2">
+              Profile Photo
+            </label>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar
+                  initials={user?.name?.slice(0, 2).toUpperCase()}
+                  avatarUrl={avatarPreview}
+                  accent="emerald"
+                />
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 grid place-items-center bg-slate-900/80 rounded-full">
+                    <LoadingSpinner />
+                  </div>
+                )}
+              </div>
+              <label className="focus cursor-pointer rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30 disabled:opacity-60">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  onChange={handleAvatarChange}
+                  disabled={uploadingAvatar}
+                  className="sr-only"
+                />
+                {uploadingAvatar ? 'Uploading...' : 'Change photo'}
+              </label>
+            </div>
+            {avatarError && (
+              <p className="mt-2 text-xs text-rose-400">{avatarError}</p>
+            )}
+            <p className="mt-2 text-xs text-slate-500">JPEG, PNG, GIF, or WebP. Max 2MB.</p>
+          </div>
+
           {[
-            ['Name', 'Purvika R'],
-            ['Email', 'purvika@example.com'],
-            ['Role', 'Developer'],
+            ['Name', user?.name || 'User'],
+            ['Email', user?.email || 'user@example.com'],
+            ['Role', user?.role || 'Developer'],
           ].map(([label, value]) => (
             <label className="mt-4 block text-sm font-display text-slate-400" key={label}>
               {label}
               <input
                 defaultValue={value}
-                className="focus mt-1 w-full rounded-lg border border-slate-800 bg-slate-900/50 p-2.5 text-slate-300"
+                disabled
+                className="focus mt-1 w-full rounded-lg border border-slate-800 bg-slate-900/50 p-2.5 text-slate-300 disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </label>
           ))}
         </section>
 
         <section className="card p-6">
-          <h2 className="font-display font-bold text-slate-200">Preferences</h2>
-          <Toggle label="Compact mode" checked={compact} onChange={setCompact} />
+          <h2 className="font-display font-bold" style={{ color: 'var(--text-secondary)' }}>Preferences</h2>
+
+          <label className="flex items-center justify-between gap-4 py-4 cursor-pointer group mt-2">
+            <div>
+              <b className="text-sm font-display transition" style={{ color: 'var(--text-muted)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>Theme</b>
+              <p className="text-xs text-slate-500 mt-0.5">Choose dark or light interface</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setTheme('dark')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  theme === 'dark'
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-slate-800/60 text-slate-400 hover:bg-slate-800'
+                }`}
+              >
+                Dark
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme('light')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  theme === 'light'
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-slate-800/60 text-slate-400 hover:bg-slate-800'
+                }`}
+              >
+                Light
+              </button>
+            </div>
+          </label>
+
           <Toggle label="Task reminders" checked={reminders} onChange={setReminders} />
         </section>
       </div>
 
+      {error && (
+        <InlineError message={error} />
+      )}
+
       <div className="mt-6 flex items-center gap-4">
         <button
-          onClick={() => setSaved(true)}
-          className="focus flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+          onClick={handleSave}
+          disabled={saving}
+          className="focus flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:opacity-60"
         >
-          <Save size={16} />
-          Save changes
+          {saving ? <LoadingSpinner /> : <Save size={16} />}
+          {saving ? 'Saving...' : 'Save changes'}
         </button>
         {saved && (
           <span role="status" className="font-mono-code text-xs text-emerald-400">

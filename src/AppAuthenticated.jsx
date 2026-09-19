@@ -7,19 +7,19 @@ const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,15
 
 function AuthShell({ children, title, subtitle }) {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#080d1a] grid-bg scanlines p-4 sm:p-6">
+    <main className="grid min-h-screen place-items-center grid-bg scanlines p-4 sm:p-6" style={{ background: 'var(--bg-primary)' }}>
       <section className="card w-full max-w-md p-6 sm:p-9 shadow-2xl border-emerald-500/10">
         <div className="mb-7 flex items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 font-display font-bold text-slate-950 shadow-lg shadow-emerald-500/30 text-lg">
-            V
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-linear-to-br from-emerald-400 to-teal-500 font-display font-bold text-slate-950 shadow-lg shadow-emerald-500/30 text-lg">
+            P
           </span>
           <div>
-            <b className="block font-display text-lg text-slate-100">Vectorlane</b>
-            <span className="font-mono-code text-[9px] tracking-[.25em] text-emerald-400">EXECUTION_OS</span>
+            <b className="block font-display text-lg" style={{ color: 'var(--text-primary)' }}>PaceFlow</b>
+            <span className="font-mono-code text-[9px] tracking-[.25em] text-emerald-400">FLOW_OS</span>
           </div>
         </div>
-        <h1 className="font-display text-2xl font-bold text-slate-100">{title}</h1>
-        <p className="mt-2 font-mono-code text-xs text-slate-500">{subtitle}</p>
+        <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h1>
+        <p className="mt-2 font-mono-code text-xs" style={{ color: 'var(--text-muted)' }}>{subtitle}</p>
         {children}
       </section>
     </main>
@@ -57,7 +57,7 @@ function Login({ showRegister }) {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="focus mt-1 w-full rounded-lg border border-slate-800 bg-slate-900/50 p-2.5 text-sm text-slate-300 placeholder:text-slate-700"
             autoComplete="email"
-            placeholder="developer@vectorlane.io"
+            placeholder="developer@paceflow.io"
           />
         </label>
         <label className="block text-sm font-display text-slate-400">
@@ -144,7 +144,7 @@ function Register({ showLogin }) {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="focus mt-1 w-full rounded-lg border border-slate-800 bg-slate-900/50 p-2.5 text-sm text-slate-300 placeholder:text-slate-700"
             autoComplete="email"
-            placeholder="developer@vectorlane.io"
+            placeholder="developer@paceflow.io"
           />
         </label>
         <label className="block text-sm font-display text-slate-400">
@@ -206,7 +206,7 @@ function AuthGate() {
 
   if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#080d1a] grid-bg scanlines">
+      <main className="grid min-h-screen place-items-center grid-bg scanlines" style={{ background: 'var(--bg-primary)' }}>
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <ShieldCheck className="text-emerald-400" size={42} />

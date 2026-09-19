@@ -2,8 +2,6 @@
 
 :root {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  color: #e2e8f0;
-  background: #080d1a;
 
   /* Mission Control accent — signal orange for command-center urgency */
   --accent-primary: #f59e0b;
@@ -13,6 +11,152 @@
   --accent-border: rgba(245, 158, 11, 0.4);
   --accent-bg: rgba(245, 158, 11, 0.2);
   --accent-text: #fbbf24;
+
+  /* Dark theme (default) */
+  --bg-primary: #080d1a;
+  --bg-secondary: #0a0f1c;
+  --bg-card: rgba(13, 22, 38, 0.85);
+  --bg-card-hover: rgba(13, 22, 38, 0.95);
+  --bg-glass: rgba(13, 22, 38, 0.75);
+  --bg-input: rgba(8, 13, 26, 0.6);
+  --bg-input-hover: rgba(8, 13, 26, 0.8);
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --border-accent: rgba(52, 211, 153, 0.12);
+
+  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.4);
+
+  --grid-line: rgba(52, 211, 153, 0.035);
+  --scanline-color: rgba(0, 0, 0, 0.25);
+}
+
+/* Light theme */
+[data-theme="light"] {
+  /* Mission Control accent — deep amber with strong contrast on light background */
+  --accent-primary: #d97706;
+  --accent-primary-hover: #b45309;
+  --accent-glow: rgba(217, 119, 6, 0.3);
+  --accent-shadow: rgba(217, 119, 6, 0.15);
+  --accent-border: rgba(217, 119, 6, 0.35);
+  --accent-bg: rgba(217, 119, 6, 0.1);
+  --accent-text: #b45309;
+
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.9);
+  --bg-input: #f1f5f9;
+  --bg-input-hover: #e2e8f0;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  --border-default: rgba(15, 23, 42, 0.1);
+  --border-hover: rgba(15, 23, 42, 0.2);
+  --border-accent: rgba(16, 185, 129, 0.25);
+
+  --shadow-card: 0 4px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-glass: 0 10px 30px rgba(15, 23, 42, 0.06);
+
+  --grid-line: rgba(16, 185, 129, 0.06);
+  --scanline-color: transparent;
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-default) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] .text-slate-300 {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .text-slate-400 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .text-slate-500 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .text-slate-600 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .text-slate-700 {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .text-emerald-400 {
+  color: #059669 !important;
+}
+
+[data-theme="light"] .text-emerald-300 {
+  color: #047857 !important;
+}
+
+[data-theme="light"] .text-teal-400,
+[data-theme="light"] .text-teal-300 {
+  color: #0f766e !important;
+}
+
+[data-theme="light"] .text-amber-300,
+[data-theme="light"] .text-amber-400 {
+  color: #b45309 !important;
+}
+
+[data-theme="light"] .text-rose-300,
+[data-theme="light"] .text-rose-400 {
+  color: #be123c !important;
+}
+
+[data-theme="light"] .text-sky-300,
+[data-theme="light"] .text-sky-400 {
+  color: #0369a1 !important;
+}
+
+[data-theme="light"] .bg-slate-800\/80,
+[data-theme="light"] .bg-slate-800\/60,
+[data-theme="light"] .bg-slate-800\/40,
+[data-theme="light"] .bg-slate-800\/20,
+[data-theme="light"] .bg-slate-900\/50,
+[data-theme="light"] .bg-slate-900\/30 {
+  background-color: #f1f5f9 !important;
+}
+
+[data-theme="light"] .border-slate-800,
+[data-theme="light"] .border-slate-800\/50,
+[data-theme="light"] .border-slate-700 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+:root,
+[data-theme="dark"] {
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] {
+  color: var(--text-primary);
+  background: var(--bg-primary);
 }
 
 * {
@@ -22,8 +166,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #080d1a;
-  color: #e2e8f0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .font-display {
@@ -44,22 +188,28 @@ button {
 }
 
 .focus {
-  @apply focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#080d1a];
+  outline: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.focus:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px rgba(52, 211, 153, 0.5);
 }
 
 .glass {
-  background: rgba(13, 22, 38, 0.75);
-  border: 1px solid rgba(52, 211, 153, 0.12);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-accent);
+  box-shadow: var(--shadow-glass);
   backdrop-filter: blur(16px);
 }
 
 .card {
-  background: rgba(13, 22, 38, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
   border-radius: 0.75rem;
-  color: #e2e8f0;
+  color: var(--text-primary);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -70,19 +220,24 @@ button {
 }
 
 .card input, .card select, .card textarea {
-  color: #f1f5f9;
-  background: rgba(8, 13, 26, 0.6);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border-default);
+}
+
+.card input:hover, .card select:hover, .card textarea:hover {
+  background: var(--bg-input-hover);
 }
 
 .card input:focus, .card select:focus, .card textarea:focus {
   border-color: rgba(52, 211, 153, 0.5);
+  background: var(--bg-input-hover);
 }
 
 .grid-bg {
   background-image:
-    linear-gradient(rgba(52, 211, 153, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(52, 211, 153, 0.035) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -95,7 +250,7 @@ button {
   display: block;
   position: absolute;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background: linear-gradient(transparent 50%, var(--scanline-color) 50%);
   background-size: 100% 4px;
   z-index: 20;
   pointer-events: none;

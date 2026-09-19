@@ -19,4 +19,5 @@ exports.create = async (req, res, next) => {
 };
 exports.list = async (req,res,next)=>{try{res.json({success:true,data:await User.find().sort('-createdAt')});}catch(e){next(e)}};
 exports.get = async (req,res,next)=>{try{const user=await User.findById(req.params.id);if(!user)return res.status(404).json({success:false,message:'User not found'});res.json({success:true,data:user});}catch(e){next(e)}};
+exports.update = async (req,res,next)=>{try{const {name,role,theme,remindersEnabled}=req.body;const updates={};if(name!==undefined)updates.name=name;if(role!==undefined)updates.role=role;if(theme!==undefined)updates.theme=theme;if(remindersEnabled!==undefined)updates.remindersEnabled=remindersEnabled;const user=await User.findByIdAndUpdate(req.params.id,updates,{new:true,runValidators:true});if(!user)return res.status(404).json({success:false,message:'User not found'});res.json({success:true,data:user});}catch(e){next(e)}};
 exports.remove = async (req,res,next)=>{try{const user=await User.findByIdAndDelete(req.params.id);if(!user)return res.status(404).json({success:false,message:'User not found'});res.json({success:true,data:user});}catch(e){next(e)}};

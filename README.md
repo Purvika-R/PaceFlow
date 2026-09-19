@@ -1,4 +1,4 @@
-# Vectorlane — AI Project Execution Workspace
+# PaceFlow — AI Project Execution Workspace
 
 Full-stack project and task platform for the Innovation Hacks internship. The browser speaks only to the Express REST API; MongoDB is accessed exclusively by the backend.
 

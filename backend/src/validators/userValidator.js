@@ -10,4 +10,12 @@ const create = [
   body('role').optional().isIn(['developer', 'manager']).withMessage('Role must be developer or manager'),
 ];
 
-module.exports = { id, create };
+const update = [
+  id(),
+  body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+  body('role').optional().isIn(['developer', 'manager']).withMessage('Role must be developer or manager'),
+  body('theme').optional().isIn(['dark', 'light']).withMessage('Theme must be dark or light'),
+  body('remindersEnabled').optional().isBoolean().withMessage('Reminders enabled must be boolean'),
+];
+
+module.exports = { id, create, update };

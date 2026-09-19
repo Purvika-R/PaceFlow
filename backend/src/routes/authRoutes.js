@@ -8,4 +8,6 @@ const { PASSWORD_RULE, PASSWORD_MESSAGE } = require('../validators/passwordPolic
 router.post('/register', authLimiter, [body('name').trim().notEmpty().withMessage('Name is required'), body('email').isEmail().withMessage('A valid email is required').normalizeEmail(), body('password').matches(PASSWORD_RULE).withMessage(PASSWORD_MESSAGE)], validate, controller.register);
 router.post('/login', authLimiter, [body('email').isEmail().withMessage('A valid email is required').normalizeEmail(), body('password').notEmpty().withMessage('Password is required')], validate, controller.login);
 router.get('/me', auth, controller.me);
+router.patch('/settings', auth, [body('theme').optional().isIn(['dark', 'light']).withMessage('Theme must be dark or light'), body('remindersEnabled').optional().isBoolean().withMessage('Reminders enabled must be boolean')], validate, controller.updateSettings);
+router.patch('/avatar', auth, controller.updateAvatar);
 module.exports = router;
